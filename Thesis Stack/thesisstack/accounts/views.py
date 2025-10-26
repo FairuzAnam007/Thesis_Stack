@@ -62,3 +62,69 @@ def student_dashboard(request):
         'groups': groups,
 
     })
+
+@login_required
+def create_group(request):
+    if request.user.role != 'student':
+        return redirect('login')
+    if request.method == 'POST':
+        form = ThesisGroupForm(request.POST)
+        if form.is_valid():
+            group = form.save(commit=False)
+            group.creator = request.user
+            group.save()
+            form.save_m2m()
+            group.members.add(request.user)
+            return redirect('student_dashboard')
+    else:
+        form = ThesisGroupForm()
+    return render(request, 'create_group.html', {'form': form})
+
+
+@login_required
+def upload_thesis(request):
+    if request.method == 'POST':
+        form = ThesisSubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            thesis = form.save(commit=False)
+            thesis.student = request.user
+            group = ThesisGroup.objects.filter(members=request.user).first()
+            thesis.group = group
+            thesis.save()
+            messages.success(request, "Thesis uploaded successfully!")
+            return redirect('student_dashboard')
+    else:
+        form = ThesisSubmissionForm()
+    return render(request, 'upload_thesis.html', {'form': form})
+
+@login_required
+def view_feedback(request):
+    group = ThesisGroup.objects.filter(members=request.user).first()
+    supervision = Supervision.objects.filter(group=group).first()
+    status_message = None
+    if supervision:
+        if supervision.status == 'accepted':
+            status_message = "Your thesis group has been accepted by faculty."
+        elif supervision.status == 'rejected':
+            status_message = "Your thesis group was not accepted by faculty."
+        else:
+            status_message = "Awaiting faculty response."
+    feedbacks = Feedback.objects.filter(thesis__student=request.user)
+    return render(request, 'view_feedback.html', {'feedbacks': feedbacks, 'status_message': status_message})
+
+@login_required
+def profile_edit(request):
+    from .forms import StudentProfileForm
+    from .models import StudentProfile
+
+    profile, _ = StudentProfile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = StudentProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('student_dashboard')
+    else:
+        form = StudentProfileForm(instance=profile)
+
+    return render(request, 'profile_edit.html', {'form': form})
