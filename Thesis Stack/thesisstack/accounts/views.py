@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
@@ -128,7 +125,6 @@ def profile_edit(request):
         form = StudentProfileForm(instance=profile)
 
     return render(request, 'profile_edit.html', {'form': form})
-
 
 @login_required
 def created_groups(request):
