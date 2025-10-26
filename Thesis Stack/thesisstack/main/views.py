@@ -71,3 +71,20 @@ def student_dashboard(request):
 def supervisor_dashboard(request):
     theses = Thesis.objects.filter(supervisor=request.user)
     return render(request, 'faculty_dashboard.html', {'theses': theses})
+
+def upload_thesis(request):
+    if request.method == 'POST':
+        form = ThesisUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            thesis = form.save(commit=False)
+            thesis.student = request.user
+            thesis.save()
+            return redirect('student_dashboard')
+    else:
+        form = ThesisUploadForm()
+    return render(request, 'upload_thesis.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    messages.info(request, "You have been logged out successfully.")
+    return redirect('home')
