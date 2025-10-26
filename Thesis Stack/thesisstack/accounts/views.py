@@ -128,3 +128,56 @@ def profile_edit(request):
         form = StudentProfileForm(instance=profile)
 
     return render(request, 'profile_edit.html', {'form': form})
+
+
+@login_required
+def created_groups(request):
+    if request.user.role != 'student':
+
+        return redirect('home')
+
+    groups = ThesisGroup.objects.filter(creator=request.user)
+
+    group_data = []
+    for g in groups:
+        submissions = ThesisSubmission.objects.filter(group=g)
+
+        feedbacks = Feedback.objects.filter(thesis__in=submissions.values_list('id', flat=True))
+
+        total_steps = 10
+        done = 0
+        if g:
+            done += 1
+        if submissions.exists():
+            done += 1
+        if feedbacks.exists():
+            done += 1
+        progress = int((done / total_steps) * 100)
+
+        group_data.append({
+            'group': g,
+            'progress': progress,
+            'members': g.members.all(),
+            'submissions': submissions,
+            'feedback_count': feedbacks.count(),
+        })
+
+    return render(request, 'created_group.html', {'group_data': group_data})
+
+
+def delete_group(request , group_id):
+    group = get_object_or_404(ThesisGroup, id=group_id)
+
+    if group.creator != request.user:
+        messages.error(request, "You are not authorized to delete this group.")
+        return redirect('student_dashboard')
+
+    if request.method == 'POST':
+        ThesisSubmission.objects.filter(group=group).delete()
+        Supervision.objects.filter(group=group).delete()
+        group.delete()
+
+        messages.success(request, f"Group '{group.name}' deleted successfully!")
+        return redirect('student_dashboard')
+
+    return render(request, 'delete_group.html', {'group': group})
