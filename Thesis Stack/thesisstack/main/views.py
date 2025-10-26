@@ -27,3 +27,47 @@ def home(request):
             context['faculty'] = faculty
 
     return render(request, 'home.html', context)
+
+def signup_view(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Account created successfully!")
+            return redirect('login')
+    else:
+        form = SignUpForm()
+    return render(request, 'signup.html', {'form': form})
+
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        selected_role = request.POST.get('role')
+        user = authenticate(request, username=username, password=password)
+
+        if user:
+            if user.role != selected_role:
+                messages.error(request, "Role mismatch! Please select the correct role.")
+                return redirect('login')
+
+            login(request, user)
+            if user.role == 'student':
+                return redirect('student_dashboard')
+            elif user.role == 'supervisor':
+                return redirect('faculty_dashboard')
+            elif user.role == 'admin':
+                return redirect('adm:admin_dashboard')
+        else:
+            messages.error(request, "Invalid credentials.")
+            return redirect('login')
+    return render(request, 'login.html')
+
+def student_dashboard(request):
+    theses = Thesis.objects.filter(student=request.user)
+    return render(request, 'dashboard_student.html', {'theses': theses})
+
+def supervisor_dashboard(request):
+    theses = Thesis.objects.filter(supervisor=request.user)
+    return render(request, 'faculty_dashboard.html', {'theses': theses})
