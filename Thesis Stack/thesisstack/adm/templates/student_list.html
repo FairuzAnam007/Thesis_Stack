@@ -2,6 +2,44 @@
 {% block title %}Student List | ThesisStack{% endblock %}
 
 {% block content %}
+<style>
+  /* Avatar Circle */
+  .avatar {
+    width: 40px;
+    height: 40px;
+    background: #0d6efd;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+  }
+
+  /* Smooth hover animation */
+  .table-hover tbody tr:hover {
+    background-color: #f0f8ff;
+    transition: background 0.3s ease;
+  }
+
+  /* Responsive adjustments for phones */
+  @media (max-width: 768px) {
+    .table-responsive {
+      font-size: 0.85rem;
+    }
+    .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
 <div class="container py-5">
   <h2 class="fw-bold text-primary mb-4 text-center">Student List</h2>
 
@@ -15,11 +53,11 @@
   <div class="card border-0 shadow-sm rounded-4">
     <div class="card-body">
       <div class="table-responsive">
-        <table class="table align-middle table-hover">
+        <table class="table align-middle table-hover text-center">
           <thead class="table-primary">
             <tr>
               <th>#</th>
-              <th>Name</th>
+              <th>Student</th>
               <th>Email</th>
               <th>Reg ID</th>
               <th>Batch</th>
@@ -32,7 +70,14 @@
             {% for stu in users %}
             <tr>
               <td>{{ forloop.counter }}</td>
-              <td>{{ stu.user.get_full_name|default:stu.user.username }}</td>
+              <td>
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                  <div class="avatar">
+                    {{ stu.user.first_name|slice:":1" }}{{ stu.user.last_name|slice:":1" }}
+                  </div>
+                  <span class="fw-semibold">{{ stu.user.get_full_name|default:stu.user.username }}</span>
+                </div>
+              </td>
               <td>{{ stu.user.email }}</td>
               <td>{{ stu.reg_id }}</td>
               <td>{{ stu.batch }}</td>
