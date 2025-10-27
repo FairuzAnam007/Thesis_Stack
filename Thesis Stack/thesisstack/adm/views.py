@@ -100,3 +100,29 @@ def faculty_list(request):
     return render(request, "faculty_list.html", {"users": faculty})
 
 
+@login_required
+def user_detail(request, user_id):
+    if request.user.role != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    user_obj = get_object_or_404(User, id=user_id)
+    return render(request, "user_detail.html", {"user_obj": user_obj})
+
+
+@login_required
+def delete_user(request, user_id):
+
+    if request.user.role != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if user == request.user or user.role == "admin":
+        messages.warning(request, "You cannot delete this user.")
+        return redirect("adm:manage_users")
+
+    user.delete()
+    messages.success(request, f"{user.get_full_name() or user.username} deleted successfully.")
+    return redirect("adm:manage_users")
