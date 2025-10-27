@@ -61,3 +61,42 @@ def admin_dashboard(request):
         },
     )
 
+@login_required
+def manage_users(request):
+    if request.user.role != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    students = StudentProfile.objects.select_related("user").all()
+    faculty = FacultyProfile.objects.select_related("user").all()
+
+    return render(
+        request,
+        "manage_users.html",
+        {
+            "students": students,
+            "faculty": faculty,
+        },
+    )
+
+@login_required
+def student_list(request):
+    if request.user.role != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    students = StudentProfile.objects.select_related("user").all()
+    return render(request, "student_list.html", {"users": students})
+
+
+@login_required
+def faculty_list(request):
+
+    if request.user.role != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    faculty = FacultyProfile.objects.select_related("user").all()
+    return render(request, "faculty_list.html", {"users": faculty})
+
+
