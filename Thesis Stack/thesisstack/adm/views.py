@@ -111,18 +111,59 @@ def user_detail(request, user_id):
 
 
 @login_required
-def delete_user(request, user_id):
-
+@transaction.atomic
+def edit_user(request, user_id):
     if request.user.role != "admin":
         messages.error(request, "Access denied.")
         return redirect("home")
 
-    user = get_object_or_404(User, id=user_id)
+    user_obj = get_object_or_404(User, id=user_id)
+    student_profile = StudentProfile.objects.filter(user=user_obj).first()
+    faculty_profile = FacultyProfile.objects.filter(user=user_obj).first()
 
-    if user == request.user or user.role == "admin":
-        messages.warning(request, "You cannot delete this user.")
-        return redirect("adm:manage_users")
+    if request.method == "POST":
+        user_form = UserEditForm(request.POST, instance=user_obj)
+        stu_form = StudentProfileAdminForm(
+            request.POST, instance=student_profile
+        ) if student_profile else None
+        fac_form = FacultyProfileAdminForm(
+            request.POST, instance=faculty_profile
+        ) if faculty_profile else None
 
-    user.delete()
-    messages.success(request, f"{user.get_full_name() or user.username} deleted successfully.")
-    return redirect("adm:manage_users")
+        if user_form.is_valid() and (
+            stu_form is None or stu_form.is_valid()
+        ) and (fac_form is None or fac_form.is_valid()):
+            user_form.save()
+            if stu_form:
+                stu_form.save()
+            if fac_form:
+                fac_form.save()
+            messages.success(request, "User updated successfully.")
+            return redirect("adm:user_detail", user_id=user_obj.id)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        user_form = UserEditForm(instance=user_obj)
+        stu_form = (
+            StudentProfileAdminForm(instance=student_profile)
+            if student_profile
+            else None
+        )
+        fac_form = (
+            FacultyProfileAdminForm(instance=faculty_profile)
+            if faculty_profile
+            else None
+        )
+
+    return render(
+        request,
+        "user_edit.html",
+        {
+            "user_obj": user_obj,
+            "form": user_form,
+            "student_form": stu_form,
+            "faculty_form": fac_form,
+        },
+    )
+
+
