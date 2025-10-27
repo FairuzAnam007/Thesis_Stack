@@ -11,3 +11,14 @@ class AdminLoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
 
 
+class UserEditForm(forms.ModelForm):
+
+    class Meta:
+        model = User
+        fields = ['username']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+
+        }
+
+
