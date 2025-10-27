@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     'main',
     'accounts',
     'faculty',
-    'adm',
+
 
 ]
 
