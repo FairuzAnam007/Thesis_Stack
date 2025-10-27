@@ -167,3 +167,19 @@ def edit_user(request, user_id):
     )
 
 
+@login_required
+def delete_user(request, user_id):
+
+    if request.user.role != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if user == request.user or user.role == "admin":
+        messages.warning(request, "You cannot delete this user.")
+        return redirect("adm:manage_users")
+
+    user.delete()
+    messages.success(request, f"{user.get_full_name() or user.username} deleted successfully.")
+    return redirect("adm:manage_users")
